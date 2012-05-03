@@ -59,7 +59,7 @@ ul.rcos-links a:hover {
 	top: 0px;
 	right: 0px;
 	
-	background: #ddd;
+	background: #eee;
 	border-left: 1px solid #ccc;
 	
 	-webkit-border-top-right-radius: 15px;
@@ -211,14 +211,14 @@ ul.rcos-links a:hover {
 }
 
 .rcos-footer a {
-	color: #999;
+	color: #ddd;
 	text-shadow: 0px -1px 0px #000;
 	text-decoration: none;
 	font-size: 12px;
 }
 
 .rcos-footer a:hover {
-	color: #aaa;
+	color: #fff;
 }
 
 .rcos-footer div {

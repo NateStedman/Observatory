@@ -41,9 +41,9 @@ def faq(request):
     }, context_instance = RequestContext(request))
 
 def courses(request):
-  return HttpResponseRedirect("http://public.kitware.com/"
-                              "OpenSourceSoftwarePractice/index.php/"
-                              "Fall2010/Main_Page")
+  return render_to_response('rcos/courses.html', {
+      'disable_content': True
+    }, context_instance = RequestContext(request))
 
 def talks(request):
   return render_to_response('rcos/talks.html', {
@@ -64,7 +64,9 @@ def urpapplication(request):
   return HttpResponseRedirect("http://www.cs.rpi.edu/~moorthy/rcos/URP_Application.pdf")
 
 def talksignup(request):
-  return HttpResponseRedirect("https://spreadsheets.google.com/ccc?key=0AmUFEZRUC23ddDg3bnF5Rnd3OHZNdFR6UkZjQUUxTFE&hl=en#gid=0")
+  return render_to_response('rcos/talksignup.html', {
+      'disable_content': True
+  }, context_instance = RequestContext(request))
 
 def linksandcontacts(request):
   return render_to_response('rcos/linksandcontacts.html', {
