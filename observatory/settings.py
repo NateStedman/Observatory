@@ -1,15 +1,17 @@
+# To use site specific settings, simply import *
+# e.g. from rcos.settings import *
+
+from rcos.settings import *
+
 import os
 import django
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+
 SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
 
-# Address for the website
-SITE_ADDRESS = "http://rcos.rpi.edu"
-ALLOWED_HOSTS = [
-    "rcos.rpi.edu"
-]
+
 
 ADMINS = (
      ('', ''),
@@ -19,7 +21,7 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'observatory',                      # Or path to database file if using sqlite3.
         'USER': 'postgres',                      # Not used with sqlite3.
         'PASSWORD': 'zaq12wsxcde34rfv',                  # Not used with sqlite3.
@@ -81,9 +83,6 @@ SCREENSHOT_PATH = os.path.join(MEDIA_ROOT, 'screenshots')
 # Root URL for screenshots
 SCREENSHOT_URL = "/site-media/screenshots/"
 
-# The address where emails should be sent from
-MAIL_SENDER = "no-reply@rpi.edu"
-
 # The maximum number of threads to use when fetching blogs
 BLOG_FETCH_PROCESS_COUNT = 4
 
@@ -114,12 +113,6 @@ UNHAPPY_SCORE = 86400 # everything after this score will be unhappy face
 # the "worst" score allowed, in minutes
 MAX_SCORE_MINUTES = 3024000
 
-# The web address that observatory is hosted on
-DOMAIN_NAME = "http://rcos.rpi.edu"
-
-# The title prepended to any RSS feeds
-FEED_TITLE = "RCOS"
-
 # The number of items that should appear in dashboard-wide feeds
 FEED_COUNT = 30
 
@@ -137,37 +130,6 @@ SECRET_KEY = 'j+e*h2ket2cf2w##m2fzjp392%68!a^xcjo+_lr_-(^d8c3ea5'
 # https://github.com/dcramer/django-devserver
 TRY_DEVSERVER = False
 
-# Log to syslog
-from logging.handlers import SysLogHandler
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': True,
-    'formatters': {
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
-        },
-        'simple': {
-            'format': '%(levelname)s %(message)s'
-        },
-    },
-    'handlers': {
-        'syslog':{
-            'level':'DEBUG',
-            'class':'logging.handlers.SysLogHandler',
-            'formatter': 'verbose',
-            'facility': 'local1',
-            'address': '/dev/log',
-        },
-
-    },
-    'loggers': {
-        'django': {
-            'handlers':['syslog'],
-            'propagate': True,
-            'level':'INFO',
-        },
-    },
-}
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -185,10 +147,11 @@ MIDDLEWARE_CLASSES = (
     'observatory.middleware.CssSmasher'
 )
 
-ROOT_URLCONF = 'observatory.rcos.urls'
+
 
 TEMPLATE_DIRS = (
-    os.path.join(SITE_ROOT, 'templates')
+    os.path.join(SITE_ROOT, 'templates'),
+    os.path.join(SITE_ROOT, 'foundry/templates')
 )
 
 INSTALLED_APPS = (
@@ -208,6 +171,7 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
     'rcos',
+    'foundry',
 )
 
 # import recaptcha keys
@@ -269,8 +233,4 @@ JS_FILES=[
   "js/init.js"
 ]
 
-## Page header
-HEADER_TEMPLATE = 'rcos/header.html'
 
-## Favicon
-FAVICON_PATH = '/site-media/rcos/favicon.ico'
