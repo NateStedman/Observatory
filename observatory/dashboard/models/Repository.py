@@ -15,14 +15,17 @@
 import os
 import re
 import settings
+import shutil
 import stat
 import subprocess
+import dateutil.parser
 from dashboard.util import format_diff
 from django.db import models
 from django.utils.html import escape
 from exceptions import Exception
-from lib import feedparser, dateutil, pyvcs
-from lib.markdown import markdown
+from lib import pyvcs
+import feedparser
+from markdown import markdown
 from lib.pyvcs.backends import get_backend
 from EventSet import EventSet
 
@@ -145,7 +148,13 @@ class Repository(EventSet):
       fresh_clone = False
 
     # clone the repository, or update our copy
-    clone_repo_function(self.vcs)(self.clone_url, dest_dir, fresh_clone)
+    try:
+        clone_repo_function(self.vcs)(self.clone_url, dest_dir, fresh_clone)
+    except Repository.CheckoutFailureException:
+        # if we couldn't update the repository, remove anything we got and try once more
+        remove_repo(dest_dir)
+        fresh_clone = True
+        clone_repo_function(self.vcs)(self.clone_url, dest_dir, fresh_clone)
   
   def clone_cmd(self):
     if not self.from_feed:
@@ -162,6 +171,8 @@ def clone_git_repo(clone_url, destination_dir, fresh_clone = False):
     clone_cmdline = ["git", "clone", "--mirror", "--bare",
                      clone_url, destination_dir]
   else:
+    update_url_cmdline = ["git", "--git-dir", destination_dir, "remote", "set-url", "origin", clone_url]
+    subprocess.call(update_url_cmdline)
     clone_cmdline = ["git", "--git-dir", destination_dir, "fetch"]
   
   if subprocess.call(clone_cmdline) != 0:
@@ -202,3 +213,7 @@ def clone_repo_function(vcs):
     return None
 
   return clone_repo_functions[vcs]
+
+def remove_repo(destination_dir):
+    #attempts to delete the entire directory tree, ignoring errors
+    shutil.rmtree(destination_dir, True)

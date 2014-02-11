@@ -3,12 +3,14 @@
 {% load head_tags %}
 {% load author_requests %}
 {% load page_customizations %}
+{% load footer %}
+{% load title %}
 
 {% spaceless %}
 
 <html>
 <head>
-    <title>{% block title %}Dashboard{% endblock %}{% block extratitle %}{% endblock %}</title>
+    {% title %}
 	{% head_tags %}
 	{% block head %}{% endblock %}
 	
@@ -16,6 +18,18 @@
 	<link href='http://fonts.googleapis.com/css?family=Puritan:regular,italic,bold,bolditalic' rel='stylesheet' type='text/css'>
 
 	{% favicon %}
+
+	<script type="text/javascript">
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-22302564-1']);
+	  _gaq.push(['_trackPageview']);
+	  (function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+	</script>
+	
 </head>
 <body>
     <div id="top">
@@ -25,38 +39,44 @@
         <div id="navigation-right">
             <ul id="navigation-main">
                 <li>
-                    <a href="{% url dashboard.views.feed.feed %}">
+                    <a href="{% url "dashboard.views.feed.feed" %}">
                         Feed
                     </a>
                 </li>
                 <li class="navigation-bullet">•</li>
                 <li>
-                    <a href="{% url dashboard.views.projects.list %}">
+                    <a href="{% url "dashboard.views.projects.list" %}">
                         Projects
                     </a>
                 </li>
                 <li class="navigation-bullet">•</li>
                 <li>
-                    <a href="{% url dashboard.views.blogs.posts %}">Posts</a>
+                    <a href="{% url "dashboard.views.blogs.posts" %}">Posts</a>
                 </li>
                 <li class="navigation-bullet">•</li>
                 <li>
-                    <a href="{% url dashboard.views.users.people %}">People</a>
+                    <a href="{% url "dashboard.views.users.people" %}">People</a>
+                </li>
+				<li class="navigation-bullet">•</li>
+                <li>
+                    <a href="{% url "todo.views.list_lists" %}">
+                        Tasks
+                    </a>
                 </li>
             </ul>
             <ul id="navigation-account">
                 {% if user.is_authenticated %}
                 <li>
-                    <a href="{% url dashboard.views.users.profile user.id%}">
+                    <a href="{% url "dashboard.views.users.profile" user.id%}">
                         {{ user.first_name }} {{ user.last_name }}
                     </a>
                 </li>
                 <li>
-                    <a href="{% url dashboard.views.users.logout %}">Logout</a>
+                    <a href="{% url "dashboard.views.users.logout" %}">Logout</a>
                 </li>
                 {% else %}
                 <li>
-                    <a href="{% url dashboard.views.users.login_or_reg %}">
+                    <a href="{% url "dashboard.views.users.login_or_reg" %}">
                         Register or Login
                     </a>
                 </li>
@@ -69,6 +89,7 @@
             {{ user|author_requests }}
         {% endautoescape %}
     {% endif %}
+
     {% if not disable_content %}
         <div id="content">
             {% if error_header %}
@@ -87,7 +108,9 @@
         <script>
             initialize_page('{{ js_page_id }}');
         </script>
-    {% endif %}
+		{% endif %}
+
+	{% block footer %}{% footer %}{% endblock %}
 </body>
 </html>
 

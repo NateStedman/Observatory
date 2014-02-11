@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python2
 
 # Copyright (c) 2010, individual contributors (see AUTHORS file)
 #
@@ -27,7 +27,9 @@ path = os.path.dirname(os.path.abspath(__file__))
 
 # remove the database and recreate it
 os.system("rm {0}/../db.sqlite".format(path))
-os.system("python {0}/../manage.py syncdb --noinput".format(path))
+os.system("python2 {0}/../manage.py syncdb --noinput".format(path))
+os.system("python2 {0}/../manage.py migrate dashboard --noinput".format(path))
+os.system("python2 {0}/../manage.py migrate dashboard --noinput".format(path))
 
 # django setup
 sys.path.insert(0, path)
@@ -37,19 +39,29 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'observatory.settings'
 
 from dashboard.models import *
 from django.contrib.auth.models import User
+from emaillist.models import EmailAddress
 
 # make some users
 for person in [('natesm@gmail.com', 'password', 'Nate', 'Stedman'),
                ('peterhajas@gmail.com', 'password', 'Peter', 'Hajas'),
                ('hortont424@gmail.com', 'password', 'Tim', 'Horton'),
                ('arsenm2@rpi.edu', 'password', 'Matt', 'Arsenault'),
-               ('doughj3@rpi.edu', 'password', 'Joseph', 'Dougherty')]:
+               ('doughj3@rpi.edu', 'password', 'Joseph', 'Dougherty'),
+			   ('ben.shippee@gmail.com', 'password','Ben', 'Shippee'),
+			   ('colin@daedrum.net', 'password','Colin', 'Rice'),
+               ]:
   m = md5()
   m.update(person[0])
   user = User.objects.create_user(m.hexdigest()[0:30], person[0], person[1])
   user.first_name = person[2]
   user.last_name = person[3]
+  user.is_staff = True
+  user.info = UserInfo(user=user,mentor=True)
+  user.info.save()
+  user.is_superuser = True
   user.save()
+  email = EmailAddress(address=person[0], user=user)
+  email.save()
   print "Added {0}".format(user.get_full_name())
   
 # make some projects
@@ -82,7 +94,8 @@ mnot = Project(title = "MobileNotifier",
                website = "http://www.peterhajas.com",
                wiki = "http://www.peterhajas.com",
                blog_id = mnot_blog.id,
-               repository_id = mnot_repo.id)
+               repository_id = mnot_repo.id,
+               pending = True)
 mnot.save()
 mnot.authors.add(User.objects.get(email = 'peterhajas@gmail.com'))
 mnot.save()
@@ -91,8 +104,8 @@ obsv_blog = Blog(from_feed = True,
                  url = "http://www.natestedman.com",
                  rss = "http://www.natestedman.com/feed")
 obsv_blog.save()
-obsv_repo = Repository(web_url = "https://github.com/natestedman/Observatory",
-                       clone_url = "git://github.com/NateStedman/Observatory.git",
+obsv_repo = Repository(web_url = "https://github.com/rcos/Observatory",
+                       clone_url = "git://github.com/rcos/Observatory.git",
                        cmd = "git clone",
                        from_feed = False)
 obsv_repo.save()
@@ -107,6 +120,7 @@ obsv.authors.add(User.objects.get(email = 'natesm@gmail.com'))
 obsv.authors.add(User.objects.get(email = 'hortont424@gmail.com'))
 obsv.authors.add(User.objects.get(email = 'peterhajas@gmail.com'))
 obsv.authors.add(User.objects.get(email = 'arsenm2@rpi.edu'))
+obsv.authors.add(User.objects.get(email = 'colin@daedrum.net'))
 obsv.save()
 
 note_blog = Blog(from_feed = True,
@@ -143,7 +157,8 @@ milk = Project(title = "milkyway@home",
                website = "http://whatmannerofburgeristhis.com",
                wiki = "http://whatmannerofburgeristhis.com",
                blog_id = milk_blog.id,
-               repository_id = milk_repo.id)
+               repository_id = milk_repo.id,
+               mentor = User.objects.filter(last_name = "Rice")[0])
 milk.save()
 milk.authors.add(User.objects.get(email = 'arsenm2@rpi.edu'))
 milk.save()
@@ -215,5 +230,7 @@ for i in range(1, 20):
                                   "password")
   user.first_name = "Test"
   user.last_name = "User{0}".format(i)
+  user.info = UserInfo(user=user, mentor=False)
+  user.info.save()
   user.save()
   obsv.authors.add(user)

@@ -1,12 +1,20 @@
+# To use site specific settings, simply import *
+# e.g. from rcos.settings import *
+
+from rcos.settings import *
+
 import os
 import django
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+
 SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
 
+
+
 ADMINS = (
-    # ('Your Name', 'your_email@domain.com'),
+     ('', ''),
 )
 
 MANAGERS = ADMINS
@@ -14,10 +22,10 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'db.sqlite',                      # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
+        'NAME': 'observatory',                      # Or path to database file if using sqlite3.
+        'USER': 'postgres',                      # Not used with sqlite3.
+        'PASSWORD': 'zaq12wsxcde34rfv',                  # Not used with sqlite3.
+        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
@@ -33,6 +41,7 @@ LOGIN_URL='/login'
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
 TIME_ZONE = 'America/New_York'
+
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -63,7 +72,7 @@ MEDIA_URL = '/site-media/'
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = '/media/'
+ADMIN_MEDIA_PREFIX = '/admin/media/'
 
 # append slashes to URLs
 APPEND_SLASH = True
@@ -75,10 +84,16 @@ SCREENSHOT_PATH = os.path.join(MEDIA_ROOT, 'screenshots')
 SCREENSHOT_URL = "/site-media/screenshots/"
 
 # The maximum number of threads to use when fetching blogs
-BLOG_FETCH_PROCESS_COUNT = 10
+BLOG_FETCH_PROCESS_COUNT = 4
 
 # The maximum number of concurrent processes to run when fetching repos
-REPO_FETCH_PROCESS_COUNT = 4
+REPO_FETCH_PROCESS_COUNT = 1
+
+# The address where emails should be sent from
+MAIL_SENDER = "no-reply@rpi.edu"
+
+# Fake url to make serve static work for now
+STATIC_URL = '/static/'
 
 # The number of minutes before a repository fetch should timeout.
 #
@@ -86,23 +101,17 @@ REPO_FETCH_PROCESS_COUNT = 4
 # the amount of time it takes to read the logs and generate diffs.
 # "Some People" commit massive diffs, other than that this should never be
 # an issue unless your computer is very, very slow.
-REPO_FETCH_TIMEOUT = 1
+REPO_FETCH_TIMEOUT = 10
 
 # scoring thresholds
-GREEN_SCORE = 2880 # everything up to this score will be green
+GREEN_SCORE = 5000 # everything up to this score will be green
 RED_SCORE = 172800 # everything after this score will be red
 
-UNCERTAIN_SCORE = 10000 # everything after this score will be uncertain face
+UNCERTAIN_SCORE = 22000 # everything after this score will be uncertain face
 UNHAPPY_SCORE = 86400 # everything after this score will be unhappy face
 
 # the "worst" score allowed, in minutes
 MAX_SCORE_MINUTES = 3024000
-
-# The web address that observatory is hosted on
-DOMAIN_NAME = "http://localhost:8000"
-
-# The title prepended to any RSS feeds
-FEED_TITLE = "Observatory"
 
 # The number of items that should appear in dashboard-wide feeds
 FEED_COUNT = 30
@@ -121,6 +130,7 @@ SECRET_KEY = 'j+e*h2ket2cf2w##m2fzjp392%68!a^xcjo+_lr_-(^d8c3ea5'
 # https://github.com/dcramer/django-devserver
 TRY_DEVSERVER = False
 
+
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
@@ -137,24 +147,31 @@ MIDDLEWARE_CLASSES = (
     'observatory.middleware.CssSmasher'
 )
 
-ROOT_URLCONF = 'observatory.urls'
+
 
 TEMPLATE_DIRS = (
-    os.path.join(SITE_ROOT, 'templates')
+    os.path.join(SITE_ROOT, 'templates'),
+    os.path.join(SITE_ROOT, 'foundry/templates')
 )
 
 INSTALLED_APPS = (
     'devserver',
+    'south',
+    'todo',
+    'emaillist',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
+    'django.contrib.staticfiles',
     'dashboard',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
+    'rcos',
+    'foundry',
 )
 
 # import recaptcha keys
@@ -193,6 +210,7 @@ CSS_FILES=[
   "css/modify.css",
   "css/profiles.css",
   "css/projects.css",
+  "css/rcos.css"
 ]
 
 JS_FILES=[
@@ -215,8 +233,4 @@ JS_FILES=[
   "js/init.js"
 ]
 
-## Page header
-HEADER_TEMPLATE = 'header.html'
 
-## Favicon
-FAVICON_PATH = '/site-media/rcos/favicon.ico'

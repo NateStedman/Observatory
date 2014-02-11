@@ -21,6 +21,8 @@
     {% autoescape off %}
         {{ commit.diff }}
     {% endautoescape %}
+{% else %}
+    Unable To Display Changes
 {% endif %}
 
 {% bottom_bar commit 0 %}

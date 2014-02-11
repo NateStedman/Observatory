@@ -14,11 +14,12 @@
 
 import datetime
 import re
-from dashboard.util import find_author, sanitize
+from dashboard.util import sanitize
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db import models
-from lib import feedparser, dateutil
+import feedparser
+import dateutil.parser
 from EventSet import EventSet
 
 # a blog for a project
@@ -55,9 +56,12 @@ class Blog(EventSet):
     entries = feedparser.parse(self.rss).entries
     for post in entries:
       try:
-        date = dateutil.parser.parse(post.date).replace(tzinfo=None)
+        date = dateutil.parser.parse(post.published).replace(tzinfo=None)
       except:
-        date = datetime.datetime.utcnow()
+        try:
+            date = dateutil.parser.parse(post.created).replace(tzinfo=None)
+        except:
+            return
       
       # don't re-add old posts
       if self.most_recent_date >= date:

@@ -30,8 +30,8 @@ SHOW_BLOGPOST_COUNT = 3
 
 # the classic "dashboard" view, with rankings
 def list(request):
-  projects = Project.objects.exclude(score = None).order_by('score')
-  scoreless = Project.objects.filter(score = None)
+  projects = Project.objects.exclude(active = False).exclude(score = None).exclude(pending= True).order_by('score')
+  scoreless = Project.objects.filter(score = None).exclude(active = False).exclude(pending= True)
   
   # fetch repositories and blogs in single queries
   repositories = Repository.objects.exclude(project = None)
@@ -44,7 +44,9 @@ def list(request):
     repository_dict[repository.id] = repository
   for blog in blogs:
     blogs_dict[blog.id] = blog
-  
+
+
+
   # assign the repositories and blogs
   for project in projects:
     project.repository = repository_dict[project.repository_id]
@@ -89,7 +91,7 @@ def list(request):
         int(424 * (1.0 * count / projects.count()))
       )
       
-  if projects.count() is not 0:
+  if projects.count() != 0:
     repo_bar_css = css(repo_count)
     blog_bar_css = css(blog_count)
     overall_bar_css = css(overall_count)
@@ -108,6 +110,96 @@ def list(request):
       'nothing_fetched': projects.count() is 0
     }, context_instance = RequestContext(request))
 
+# "dashboard" view for archived projects without scoring
+def archived_list(request):
+  projects = Project.objects.exclude(score = None).exclude(active = True).exclude(pending= True).order_by('score')
+  scoreless = Project.objects.filter(score = None).exclude(active = True).exclude(pending= True)
+
+
+  
+  # fetch repositories and blogs in single queries
+  repositories = Repository.objects.exclude(project = None)
+  blogs = Blog.objects.exclude(project = None)
+  
+  repository_dict = {}
+  blogs_dict = {}
+  
+  for repository in repositories:
+    repository_dict[repository.id] = repository
+  for blog in blogs:
+    blogs_dict[blog.id] = blog
+
+
+
+  # assign the repositories and blogs
+  for project in projects:
+    project.repository = repository_dict[project.repository_id]
+    project.blog = blogs_dict[project.blog_id]
+  
+  # find the number of updates for blog, repo and overall in the past week
+  repo_count, blog_count, overall_count = 0, 0, 0
+  now = datetime.utcnow()
+  for project in projects:
+    repo_days = (now - project.repository.most_recent_date).days
+    blog_days = (now - project.blog.most_recent_date).days
+    if repo_days < 7: repo_count += 1
+    if blog_days < 7: blog_count += 1
+    if repo_days < 7 or blog_days < 7: overall_count += 1
+  
+  
+  return render_to_response('projects/archive_list.html', {
+      'projects': projects,
+      'scoreless': scoreless,
+      'blog_count': blog_count,
+      'repo_count': repo_count,
+      'nothing_fetched': projects.count() is 0
+    }, context_instance = RequestContext(request))
+
+# "dashboard" view for archived projects without scoring
+def pending_list(request):
+  projects = Project.objects.filter(pending= True)
+  
+  return render_to_response('projects/pending_list.html', {
+      'projects': projects,
+      'nothing_fetched': projects.count() is 0
+    }, context_instance = RequestContext(request))
+
+def add_mentor(request):
+  mentor = get_object_or_404(User, id = int(request.POST["user_id"]))
+  project = get_object_or_404(Project, id = int(request.POST["project_id"]))
+
+  if not mentor.info.mentor:
+    return HttpResponseRedirect(reverse(show, args=(project.url_path)))
+
+  if int(request.user.id) != mentor.id:
+    return HttpResponseRedirect(reverse(show, args=(project.url_path)))
+
+  project.mentor = mentor
+  project.save()
+
+  return HttpResponseRedirect(reverse(show, args = (project.url_path,)))
+
+def approve(request, project_url_path):
+  try:
+    mentor = request.user.info.mentor
+  except:
+    mentor = False
+  project = get_object_or_404(Project, url_path = project_url_path)
+  if project.mentor and mentor:
+    project.pending = False
+    project.save()
+  return pending_list(request)
+
+def deny(request, project_url_path):
+  try:
+    mentor = request.user.info.mentor
+  except:
+    mentor = False
+  if mentor:
+    project = get_object_or_404(Project, url_path = project_url_path)
+    project.delete()
+  return pending_list(request)
+
 # information about a specific project
 def show(request, project_url_path):
   # redirect if the url path is not in the correct format
@@ -116,6 +208,8 @@ def show(request, project_url_path):
   
   # get the project
   project = get_object_or_404(Project, url_path = project_url_path)
+
+
   
   # create a paginated list of the screenshots of the project
   paginator = None
@@ -133,7 +227,7 @@ def show(request, project_url_path):
   # exclude the current authors from the project
   for user in project.authors.all():
     contributors = contributors.exclude(user = user)
-  
+
   # if the user has already submitted an author request, hide add/remove author
   show_add_remove_author = True
   if request.user is not None:
@@ -146,7 +240,6 @@ def show(request, project_url_path):
   # get the most recent blog posts for the project
   blogposts = BlogPost.objects.filter(blog = project.blog)
   blogposts = blogposts.order_by('date').reverse()[:SHOW_BLOGPOST_COUNT]
-  
   return render_to_response('projects/show.html', {
       'project': project,
       'paginator': paginator,
@@ -158,7 +251,8 @@ def show(request, project_url_path):
       'blogposts': blogposts,
       'commits': commits,
       'contributors': contributors,
-      'show_add_remove_author': show_add_remove_author
+      'show_add_remove_author': show_add_remove_author,
+      'mentor': project.mentor,
     }, context_instance = RequestContext(request))
 
 # a view for adding a new project
@@ -276,7 +370,8 @@ def add(request):
                       description = project_form.cleaned_data['description'],
                       active = True,
                       repository_id = repo.id,
-                      blog_id = blog.id)
+                      blog_id = blog.id,
+					  pending = True)
 
     # get the project a primary key
     project.save()
@@ -285,6 +380,12 @@ def add(request):
     project.authors.add(request.user)
 
     # save the project again
+    project.save()
+
+    # Set the active flag as true
+    project.active = True
+
+    # Save the project again
     project.save()
 
     # redirect to the show page for the new project
@@ -301,7 +402,7 @@ def modify(request, project_url_path, tab_id = 1):
   screenshots = Screenshot.objects.filter(project = project)
   
   # if someone tries to edit a project they shouldn't be able to
-  if not (request.user in project.authors.all() or request.user.is_staff):
+  if not (request.user in project.authors.all() or request.user.info.mentor):
     return HttpResponseRedirect(reverse(show, args = (project.url_path,)))
   
   # default forms
@@ -323,7 +424,7 @@ def modify(request, project_url_path, tab_id = 1):
 
     # wrote a post with the js overlay
     if 'title' in request.POST and 'markdown' in request.POST:
-      from observatory.dashboard.views.blogs import create_post_real
+      from dashboard.views.blogs import create_post_real
       return create_post_real(request.POST)
 
     # editing the project's information
@@ -336,6 +437,7 @@ def modify(request, project_url_path, tab_id = 1):
         project.website = form.cleaned_data['website']
         project.wiki = form.cleaned_data['wiki']
         project.description = form.cleaned_data['description']
+        project.active = form.cleaned_data['active']
         project.save()
         project_form = ProjectForm(instance = project)
       
@@ -402,6 +504,9 @@ def modify(request, project_url_path, tab_id = 1):
     'tab': int(tab_id)
   }, context_instance = RequestContext(request))
 
+
+	
+
 # adds a user as an author of a project
 def add_user(request):
   # get the user and project
@@ -409,7 +514,10 @@ def add_user(request):
   project = get_object_or_404(Project, id = int(request.POST["project_id"]))
   
   # don't let people add other users
-  if int(request.user.id) is not user.id:
+  if int(request.user.id) != user.id:
+    import logging
+    logger = logging.getLogger('django.debug')
+    logger.warning('%s != %s for request %s' % (request.user.id, user.id, request))
     return HttpResponseRedirect(reverse(show, args = (project.url_path,)))
   
   # find the current authors of the project
@@ -437,7 +545,7 @@ def remove_user(request):
   project = get_object_or_404(Project, id = int(request.POST["project_id"]))
   
   # don't let people delete other users
-  if int(request.user.id) is not int(user.id):
+  if request.user.id != user.id:
     return HttpResponseRedirect(reverse(show, args = (project.url_path,)))
   
   # removes the user from the project

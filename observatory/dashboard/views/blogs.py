@@ -17,7 +17,7 @@ from dashboard.forms import BlogPostForm, BlogForm
 from dashboard.models import BlogPost, Blog, Project
 from dashboard.util import url_pathify, force_url_paths
 from dashboard.util import avoid_duplicate_queries
-from observatory.dashboard.views import projects
+from dashboard.views import projects
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
@@ -25,7 +25,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
-from lib.markdown import markdown
+from markdown import markdown
 
 # the number of posts per page
 POSTS_PER_PAGE = 5
@@ -145,7 +145,7 @@ def create_post(request, project_id):
   # validate the form
   if form.is_valid():
     date = datetime.datetime.utcnow()
-    html = markdown(request.POST['markdown'], safe_mode = True)
+    html = markdown(request.POST['markdown'], safe_mode = "escape")
     post = BlogPost(title = request.POST['title'],
                     markdown = request.POST['markdown'],
                     summary = html,
@@ -179,7 +179,7 @@ def update_post(request, project_url_path, post_url_path):
   # validate the form
   if form.is_valid():
     # update the post
-    html = markdown(request.POST['markdown'], safe_mode = True)
+    html = markdown(request.POST['markdown'], safe_mode = "escape")
     post.title = request.POST['title']
     post.markdown = request.POST['markdown']
     post.summary = html
@@ -220,7 +220,7 @@ def remove_personal_blog(request, user_id):
   except Blog.DoesNotExist:
     pass #No need to delete anything
 
-  from observatory.dashboard.views import users
+  from dashboard.views import users
   return HttpResponseRedirect(reverse(users.profile,
                                       args = (request.user.id,)))
 
@@ -246,7 +246,7 @@ def edit_personal_blog(request, user_id):
       blog.save()
     
     # prevent form resubmission on refresh by redirecting
-    from observatory.dashboard.views import users
+    from dashboard.views import users
     return HttpResponseRedirect(reverse(users.profile,
                                         args = (request.user.id,)))
   

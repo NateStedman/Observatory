@@ -1,0 +1,30 @@
+<div class="extra-content" id="project-{{ project.id }}">
+    <h2 style="float:left; clear:both">
+        <a href="{% url "dashboard.views.projects.show" project.url_path %}">
+            {{ project.title }}
+        </a>
+    </h2>
+    {% include "projects/partials/info.html" %}
+    <div class="clear"></div>
+    {{ project.description|linebreaks }}
+    <div class="bottom-bar">
+		<div class="bottom-bar-left">
+        {% if project.mentor %}
+            {% if user.info.mentor %}
+            <a href="{% url "dashboard.views.projects.approve" project.url_path %}">
+				Approve this Project
+			</a>
+            {% endif %}
+        {% else %}
+            Mentor Needed
+        {% endif %}
+        </div>
+		<div class="bottom-bar-right">
+        {% if user.info.mentor %}
+		<a href="{% url "dashboard.views.projects.deny" project.url_path %}">
+				Remove this Project
+			</a>
+        {% endif %}
+        </div>
+    </div>
+</div>

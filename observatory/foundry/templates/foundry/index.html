@@ -1,0 +1,76 @@
+{% extends "foundry/base.html" %}
+
+{% block head %}
+<script>
+	current = "#stylish-{{ projects.0.url_path }}"
+	locked = false
+	function showStylish(id) {
+		if (locked || id == current) return;
+		locked = true;
+
+		outgoing = $(current)
+		incoming = $(id)
+
+		$(current + "-chooser").removeClass("selected")
+		$(id + "-chooser").addClass("selected")
+
+		incoming.css("display", "block")
+		incoming.css("opacity", 0);
+		outgoing.animate({ "opacity": 0 }, 400,
+			function(){ outgoing.css("display", "none"); locked = false })
+		incoming.animate({ "opacity": 1 }, 400)
+		current = id
+	}
+</script>
+{% endblock %}
+
+
+{% block rcoscontent %}
+<div class="rcos-stylish-thing">
+	{% for project in projects %}
+	<a class="rcos-stylish-project" id="stylish-{{ project.url_path }}"
+	   href="{% url "dashboard.views.projects.show" project.url_path %}"
+	   style="display:{% cycle "block" "none" "none" %};
+		       background-image:url('{{ project.random_main_page_screenshot }}');">
+		<div>
+			<h2>{{ project.title }}</h2>
+			<p>
+				{{ project.description|striptags|truncatewords:10 }}
+			</p>
+		</div>
+	</a>
+	{% endfor %}
+	{% for project in projects %}
+	<a href="#" onClick='showStylish("#stylish-{{ project.url_path }}")'
+		style="right:{% cycle "65px" "35px" "5px" %};"
+		id="stylish-{{ project.url_path }}-chooser"
+		class="chooser {% cycle "selected" "" "" %}">
+		<div>
+			{% cycle 1 2 3 %}
+		</div>
+	</a>
+	{% endfor %}
+</div>
+
+<h2>Foundry at RPI</h2>
+<p>
+	Making the leap from entrepreneurial student to business startup is no easy task. Are you looking for a place to start? Looking for a place where you can get feedback and support from like-minded peers and experienced business professionals?
+	</br></br>
+	The Foundry-RPI program is designed to provide just that place. Launched at Rensselaer with the support of the Severino Center for Technological Entrepreneurship as an experiment in the spring semester of 2012, the program found success through the summer, and will continue in the fall of 2012. Over the spring and summer terms 17 startup companies and 24 students have participated in the program.
+</p>
+
+<h2>About Foundry</h2>
+<p>
+	The Foundry at RPI is based upon the Foundry system developed at the University of Utah. In the system, a cohort of student entrepreneurs engage in a lightweight planning process, build a network of advisors, and obtain peer feedback on a weekly basis. Participants commit to a weekly planning process, obtain feedback from their peers, and learn the practices of entrepreneurship and management.
+	<br><br>
+	Unlike a typical incubator program, the Foundry is designed to create entrepreneurs, not companies. This hasn’t hindered the success of the participants though. A recent Fast Company article noted that since the Foundry in Utah was initiated in May 2010, it has produced 64 revenue-generating companies, 75 jobs, and about $12 million in revenue.
+	</p>
+
+<h2>How To Join</h2>
+<p>
+	To apply to the Foundry at RPI, fill out the form located <a href = "http://www.formstack.com/forms/?1573911-s6bVBo7GkA">here.</a>
+</p>
+
+{% endblock %}
+
+

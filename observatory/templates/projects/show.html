@@ -5,11 +5,11 @@
 {% block head %}
 {% endblock %}
 
-{% block title %}{{ project.title }}{% endblock %}
+{% block title %}{{ project.title }}{%if project.pending%} (Proposal) {%endif%}{% endblock %}
 
 {% block content %}
 <div class="top-bar">
-    <h2 style='float:left'>{{ project.title }}</h2>
+    <h2 style='float:left'>{{ project.title }} {%if project.pending%} (Proposal) {%endif%}</h2>
 
     {% include "projects/partials/info.html" %}
 </div>
@@ -68,6 +68,23 @@
     {{ project.description|linebreaks }}
 </div>
 
+{%if project.pending%}
+    {% if user.info.mentor and project.mentor %}
+    <div class="bottom-bar">
+		<div class="bottom-bar-left">
+		<a href="{% url "dashboard.views.projects.approve" project.url_path %}">
+				Approve this Project
+			</a>
+        </div>
+		<div class="bottom-bar-right">
+		<a href="{% url "dashboard.views.projects.deny" project.url_path %}">
+				Remove this Project
+			</a>
+        </div>
+    </div>
+    {% endif %}
+{%endif%}
+
 <div class="dark">
 {% if authors %}
     <div class="header">
@@ -78,7 +95,7 @@
     <ul class="project-authors dark">
         {% for author in authors %}
             <li>
-                <a href="{% url dashboard.views.users.profile author.id %}">
+                <a href="{% url "dashboard.views.users.profile" author.id %}">
                     <img src="{{ author|gravatar:100 }}"
                          alt="{{ author.get_full_name }}" />
                     <p>{{ author.get_full_name }}</p>
@@ -92,7 +109,7 @@
         <h2>No current authors.</h2>
         <div id="project-no-authors-button">
             {% if user.is_authenticated %}
-                <form action="{% url dashboard.views.projects.add_user %}"
+                <form action="{% url "dashboard.views.projects.add_user" %}"
                       method="post">
                     {% csrf_token %}
                     <input type="submit" value="I work on this!"
@@ -118,7 +135,7 @@
         {% for contributor in contributors %}
             <li>
                 {% if contributor.user %}
-                    <a href="{% url dashboard.views.users.profile contributor.user.id %}">
+                    <a href="{% url "dashboard.views.users.profile" contributor.user.id %}">
                         <img src="{{ contributor.user|gravatar:100 }}"
                              alt="{{ contributor.user.get_full_name }}" />
                         <p>{{ contributor.user.get_full_name }}</p>
@@ -133,6 +150,36 @@
         <div style="clear:both"></div>
     </ul>
 {% endif %}
+
+<hr />
+
+<div class="header">
+    <h2>Mentor</h2>
+    {% include "projects/partials/mentor_add.html" %}
+</div>
+
+{% if mentor %}
+<ul class="project-authors">
+        <li>
+                <a href="{% url "dashboard.views.users.profile" mentor.id %}">
+                    <img src="{{ mentor|gravatar:100 }}"
+                         alt="{{ mentor.get_full_name }}" />
+                    <p>{{ mentor.get_full_name }}</p>
+                </a>
+        </li>
+    <div style="clear:both"></div>
+</ul>
+{% else %}
+<div class="project-authors">
+    {% if not project.pending %}
+    <h2>This project got grandfathered in without a set mentor<h2>
+    {% else %}
+    <h2> No mentor yet </h2>
+    {% endif %}
+</div>
+
+{% endif %}
+
 </div>
     
 <div id="project-recent-activity">
@@ -140,13 +187,13 @@
         {% if blogposts %}
             <div class="project-recent-header">
                 <h2>Recent Posts</h2>
-                <a href="{% url dashboard.views.blogs.show_blog project.url_path %}" class="green button">
+                <a href="{% url "dashboard.views.blogs.show_blog" project.url_path %}" class="green button">
                     See All
                 </a>
             </div>
             {% for post in blogposts %}
                 <h3>
-                    <a href="{% url dashboard.views.blogs.show_post project.url_path post.url_path %}">
+                    <a href="{% url "dashboard.views.blogs.show_post" project.url_path post.url_path %}">
                         {{ post.title }}
                     </a>
                 </h3>
@@ -164,13 +211,13 @@
         {% if commits %}
             <div class="project-recent-header">
                 <h2>Recent Commits</h2>
-                <a href="{% url dashboard.views.commits.show_repository project.url_path %}" class="green button">
+                <a href="{% url "dashboard.views.commits.show_repository" project.url_path %}" class="green button">
                     See All
                 </a>
             </div>
             {% for commit in commits %}
                 <h3>
-                    <a href="{% url dashboard.views.commits.show project.url_path commit.url_path %}">
+                    <a href="{% url "dashboard.views.commits.show" project.url_path commit.url_path %}">
                         {{ commit.title }}
                     </a>
                 </h3>
