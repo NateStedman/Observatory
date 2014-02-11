@@ -6,7 +6,7 @@ from rcos.settings import *
 import os
 import django
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
